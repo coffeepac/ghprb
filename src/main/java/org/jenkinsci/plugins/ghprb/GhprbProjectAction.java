@@ -56,7 +56,7 @@ public class GhprbProjectAction implements ProminentProjectAction{
 				logger.log(Level.INFO, "pull_request");
 				GHEventPayload.PullRequest pr = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.PullRequest.class);
 				logger.log(Level.INFO, pr.toString());
-				repo.onPullRequestHook(pr);
+				repo.onPullRequestHook(pr.getAction(), pr.getNumber(), pr.getPullRequest());
 			}else{
 				logger.log(Level.WARNING, "Request not known");
 			}

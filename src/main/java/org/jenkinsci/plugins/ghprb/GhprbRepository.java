@@ -7,14 +7,9 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
-import org.kohsuke.github.GHCommitState;
-import org.kohsuke.github.GHEvent;
+import org.kohsuke.github.*;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
-import org.kohsuke.github.GHHook;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRepository;
 
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
@@ -169,31 +164,30 @@ public class GhprbRepository {
 	}
 
 	void onIssueCommentHook(IssueComment issueComment) {
-		int id = issueComment.getIssue().getNumber();
-		logger.log(Level.INFO, "id: " + id + " body: '"+issueComment.getComment().getBody()+"'");
-		if(logger.isLoggable(Level.FINER)){
-			logger.log(
-					Level.FINER,
-					"Comment on issue #{0}: '{1}'",
-					new Object[]{id,issueComment.getComment().getBody()});
-		}
-		logger.log(Level.INFO, "action: "+ issueComment.getAction());
-		if(!"created".equals(issueComment.getAction())) return;
-		GhprbPullRequest pull = pulls.get(id);
-		if(pull == null){
-			if(logger.isLoggable(Level.FINER)){
-				logger.log(Level.FINER, "Pull request #{0} neexistuje", id);
+		String action = issueComment.getAction();
+		GHIssue issue = issueComment.getIssue();
+		int number = issue.getNumber();
+		GHIssueComment comment = issueComment.getComment();
+		String body = comment.getBody();
+		logger.log(Level.INFO, "Repo {0} issueComment hook; action: {1}, issue.number: {2}, comment.body: {3}", new Object[] { reponame, action, number, body });
+		if ("created".equals(action)) {
+			if (issue.getPullRequest() != null) {
+				try {
+					GHPullRequest pullRequest = repo.getPullRequest(number);
+					if (pullRequest.getState() == GHIssueState.OPEN) {
+						// Transmogrify this into a "pull request synchronize" event; commits may have changed since we last saw the pull request
+						onPullRequestHook("synchronize", number, pullRequest);
+					}
+				} catch (IOException e) {
+					logger.log(Level.WARNING, "Failed to convert unknown issue into pull request", e);
+				}
 			}
-			return;
+		} else {
+			logger.log(Level.WARNING, "Unknown action: {0}", new Object[] { action });
 		}
-		pull.check(issueComment.getComment());
-		GhprbTrigger.getDscp().save();
 	}
 
-	void onPullRequestHook(PullRequest pr) {
-		String action = pr.getAction();
-		int number = pr.getNumber();
-		GHPullRequest pullRequest = pr.getPullRequest();
+	void onPullRequestHook(String action, int number, GHPullRequest pullRequest) {
 		logger.log(Level.INFO, "Handling pr.action: {0}, pr.number: {1}, pr.pullRequest: {2}", new Object[] { action, number, pullRequest });
 		if ("opened".equals(action) || "reopened".equals(action) || "synchronize".equals(action)) {
 			GhprbPullRequest pull = pulls.get(number);
@@ -207,7 +201,7 @@ public class GhprbRepository {
 			logger.log(Level.INFO, "Removing GhprbPullRequest for pr.number: {0}", new Object[] { number });
 			pulls.remove(number);
 		} else {
-			logger.log(Level.WARNING, "Unknown action: {0}", action);
+			logger.log(Level.WARNING, "Unknown action: {0}", new Object[] { action });
 		}
 		GhprbTrigger.getDscp().save();
 	}
