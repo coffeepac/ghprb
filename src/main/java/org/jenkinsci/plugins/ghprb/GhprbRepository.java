@@ -171,14 +171,14 @@ public class GhprbRepository {
 
 	void onIssueCommentHook(IssueComment issueComment) {
 		int id = issueComment.getIssue().getNumber();
-		System.out.println("id: " + id + " body: '"+issueComment.getComment().getBody()+"'");
+		logger.log(Level.INFO, "id: " + id + " body: '"+issueComment.getComment().getBody()+"'");
 		if(logger.isLoggable(Level.FINER)){
 			logger.log(
 					Level.FINER,
 					"Comment on issue #{0}: '{1}'",
 					new Object[]{id,issueComment.getComment().getBody()});
 		}
-		System.out.println("action: "+ issueComment.getAction());
+		logger.log(Level.INFO, "action: "+ issueComment.getAction());
 		if(!"created".equals(issueComment.getAction())) return;
 		GhprbPullRequest pull = pulls.get(id);
 		if(pull == null){
@@ -193,7 +193,7 @@ public class GhprbRepository {
 
 	void onPullRequestHook(PullRequest pr) {
 		if("opened".equals(pr.getAction()) || "reopened".equals(pr.getAction())){
-			System.out.println("(re)opened");
+			logger.log(Level.INFO, "(re)opened");
 			GhprbPullRequest pull = pulls.get(pr.getNumber());
 			if(pull == null){
 				pull = new GhprbPullRequest(pr.getPullRequest(), ml, this);
@@ -201,7 +201,7 @@ public class GhprbRepository {
 			}
 			pull.check(pr.getPullRequest());
 		}else if("synchronize".equals(pr.getAction())){
-			System.out.println("synchro");
+			logger.log(Level.INFO, "synchro");
 			GhprbPullRequest pull = pulls.get(pr.getNumber());
 			if(pull == null){
 				logger.log(Level.SEVERE, "Pull Request #{0} doesn't exist", pr.getNumber());

@@ -39,7 +39,7 @@ public class GhprbProjectAction implements ProminentProjectAction{
 	}
 
 	public void doIndex(StaplerRequest req) {
-		System.out.println("Receiving...");
+		logger.log(Level.INFO, "Receiving...");
 		String event = req.getHeader("X-Github-Event");
 		String payload = req.getParameter("payload");
 		if(payload == null){
@@ -48,14 +48,14 @@ public class GhprbProjectAction implements ProminentProjectAction{
 		}
 		try{
 			if("issue_comment".equals(event)){
-				System.out.println("issue_comment");
+				logger.log(Level.INFO, "issue_comment");
 				GHEventPayload.IssueComment issueComment = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
-				System.out.println(issueComment);
+				logger.log(Level.INFO, issueComment.toString());
 				repo.onIssueCommentHook(issueComment);
 			}else if("pull_request".equals(event)) {
-				System.out.println("pull_request");
+				logger.log(Level.INFO, "pull_request");
 				GHEventPayload.PullRequest pr = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.PullRequest.class);
-				System.out.println(pr);
+				logger.log(Level.INFO, pr.toString());
 				repo.onPullRequestHook(pr);
 			}else{
 				logger.log(Level.WARNING, "Request not known");
