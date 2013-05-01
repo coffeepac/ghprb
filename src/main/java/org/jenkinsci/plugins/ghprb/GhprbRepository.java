@@ -42,7 +42,7 @@ public class GhprbRepository {
 	}
 
 	private boolean checkState(){
-		if(repo == null){
+		if (repo == null) {
 			try {
 				repo = ml.getGitHub().get().getRepository(reponame);
 			} catch (IOException ex) {
@@ -53,8 +53,12 @@ public class GhprbRepository {
 		return true;
 	}
 
-	public void check(){
-		if(!checkState()) return;
+	public void check() {
+		logger.log(Level.INFO, "Repo {0} checking pull requests", new Object[] { reponame });
+
+		if (!checkState()) {
+			return;
+		}
 
 		List<GHPullRequest> prs;
 		try {
@@ -65,7 +69,7 @@ public class GhprbRepository {
 		}
 		Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
 
-		for(GHPullRequest pr : prs){
+		for (GHPullRequest pr : prs) {
 			check(pr);
 			closedPulls.remove(pr.getNumber());
 		}
@@ -138,18 +142,21 @@ public class GhprbRepository {
 
 
 	private static final EnumSet EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
-	private boolean hookExist() throws IOException{
-		for(GHHook h : repo.getHooks()){
-			if("web".equals(h.getName()) && ml.getHookUrl().equals(h.getConfig().get("url"))) {
+
+	private boolean hookExists() throws IOException {
+		for (GHHook h : repo.getHooks()) {
+			if ("web".equals(h.getName()) && ml.getHookUrl().equals(h.getConfig().get("url"))) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	public boolean createHook(){
-		try{
-			if(hookExist()) return true;
+	public boolean createHook() {
+		try {
+			if (hookExists()) {
+				return true;
+			}
 			Map<String,String> config = new HashMap<String, String>();
 			config.put("url", new URL(ml.getHookUrl()).toExternalForm());
 			if (!GhprbTrigger.getDscp().isVerifyHookUrlSsl()) {
@@ -157,7 +164,7 @@ public class GhprbRepository {
 			}
 			repo.createHook("web", config, EVENTS, true);
 			return true;
-		}catch(IOException ex){
+		} catch (IOException ex) {
 			logger.log(Level.SEVERE, "Couldn't create web hook for repository"+reponame , ex);
 			return false;
 		}
@@ -185,10 +192,11 @@ public class GhprbRepository {
 		} else {
 			logger.log(Level.WARNING, "Unknown action: {0}", new Object[] { action });
 		}
+		GhprbTrigger.getDscp().save();
 	}
 
 	void onPullRequestHook(String action, int number, GHPullRequest pullRequest) {
-		logger.log(Level.INFO, "Handling pr.action: {0}, pr.number: {1}, pr.pullRequest: {2}", new Object[] { action, number, pullRequest });
+		logger.log(Level.INFO, "Repo {0} pullRequest hook; action: {1}, number: {2}, pullRequest: {3}", new Object[] { reponame, action, number, pullRequest });
 		if ("opened".equals(action) || "reopened".equals(action) || "synchronize".equals(action)) {
 			GhprbPullRequest pull = pulls.get(number);
 			if (pull == null) {

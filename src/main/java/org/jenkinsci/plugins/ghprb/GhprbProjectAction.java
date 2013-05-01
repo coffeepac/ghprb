@@ -42,25 +42,21 @@ public class GhprbProjectAction implements ProminentProjectAction{
 		logger.log(Level.INFO, "Receiving...");
 		String event = req.getHeader("X-Github-Event");
 		String payload = req.getParameter("payload");
-		if(payload == null){
+		if (payload == null) {
 			logger.log(Level.SEVERE, "Request doesn't contain payload.");
 			return;
 		}
-		try{
-			if("issue_comment".equals(event)){
-				logger.log(Level.INFO, "issue_comment");
+		try {
+			if ("issue_comment".equals(event)) {
 				GHEventPayload.IssueComment issueComment = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
-				logger.log(Level.INFO, issueComment.toString());
 				repo.onIssueCommentHook(issueComment);
-			}else if("pull_request".equals(event)) {
-				logger.log(Level.INFO, "pull_request");
+			} else if("pull_request".equals(event)) {
 				GHEventPayload.PullRequest pr = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.PullRequest.class);
-				logger.log(Level.INFO, pr.toString());
 				repo.onPullRequestHook(pr.getAction(), pr.getNumber(), pr.getPullRequest());
-			}else{
+			} else {
 				logger.log(Level.WARNING, "Request not known");
 			}
-		}catch(IOException ex){
+		} catch(IOException ex) {
 			logger.log(Level.SEVERE, "Failed to parse github hook payload.", ex);
 		}
 	}
