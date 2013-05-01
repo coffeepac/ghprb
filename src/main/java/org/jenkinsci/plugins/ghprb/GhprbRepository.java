@@ -191,26 +191,23 @@ public class GhprbRepository {
 	}
 
 	void onPullRequestHook(PullRequest pr) {
-		if("opened".equals(pr.getAction()) || "reopened".equals(pr.getAction())){
-			logger.log(Level.INFO, "(re)opened");
-			GhprbPullRequest pull = pulls.get(pr.getNumber());
-			if(pull == null){
-				pull = new GhprbPullRequest(pr.getPullRequest(), ml, this);
-				pulls.put(pr.getNumber(), pull);
+		String action = pr.getAction();
+		int number = pr.getNumber();
+		GHPullRequest pullRequest = pr.getPullRequest();
+		logger.log(Level.INFO, "Handling pr.action: {0}, pr.number: {1}, pr.pullRequest: {2}", new Object[] { action, number, pullRequest });
+		if ("opened".equals(action) || "reopened".equals(action) || "synchronize".equals(action)) {
+			GhprbPullRequest pull = pulls.get(number);
+			if (pull == null) {
+				logger.log(Level.INFO, "Creating new GhprbPullRequest for pr.number: {0}", new Object[] { number });
+				pull = new GhprbPullRequest(pullRequest, ml, this);
+				pulls.put(number, pull);
 			}
-			pull.check(pr.getPullRequest());
-		}else if("synchronize".equals(pr.getAction())){
-			logger.log(Level.INFO, "synchro");
-			GhprbPullRequest pull = pulls.get(pr.getNumber());
-			if(pull == null){
-				logger.log(Level.SEVERE, "Pull Request #{0} doesn't exist", pr.getNumber());
-				return;
-			}
-			pull.check(pr.getPullRequest());
-		}else if("closed".equals(pr.getAction())){
-			pulls.remove(pr.getNumber());
-		}else{
-			logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
+			pull.check(pullRequest);
+		} else if ("closed".equals(action)) {
+			logger.log(Level.INFO, "Removing GhprbPullRequest for pr.number: {0}", new Object[] { number });
+			pulls.remove(number);
+		} else {
+			logger.log(Level.WARNING, "Unknown action: {0}", action);
 		}
 		GhprbTrigger.getDscp().save();
 	}
