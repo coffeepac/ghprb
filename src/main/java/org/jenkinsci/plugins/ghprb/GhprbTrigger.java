@@ -35,6 +35,9 @@ import org.kohsuke.stapler.StaplerRequest;
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
+
+	private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
+
 	private final String adminlist;
 	private       String whitelist;
 	private final String orgslist;
@@ -66,7 +69,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			     .setPulls(DESCRIPTOR.getPullRequests(project.getFullName()))
 			     .build();
 		}catch(IllegalStateException ex){
-			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.SEVERE, "Can't start trigger");
+			logger.log(Level.SEVERE, "Can't start trigger");
 			return;
 		}
 
@@ -124,7 +127,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		try {
 			this.job.save();
 		} catch (IOException ex) {
-			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.SEVERE, "Failed to save new whitelist", ex);
+			logger.log(Level.SEVERE, "Failed to save new whitelist", ex);
 		}
 	}
 

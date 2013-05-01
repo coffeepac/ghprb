@@ -14,6 +14,9 @@ import org.kohsuke.stapler.StaplerRequest;
  * @author janinko
  */
 public class GhprbProjectAction implements ProminentProjectAction{
+
+	private static final Logger logger = Logger.getLogger(GhprbProjectAction.class.getName());
+
 	static final String URL = "ghprbhook";
 	private GhprbGitHub gh;
 	private GhprbRepository repo;
@@ -40,7 +43,7 @@ public class GhprbProjectAction implements ProminentProjectAction{
 		String event = req.getHeader("X-Github-Event");
 		String payload = req.getParameter("payload");
 		if(payload == null){
-			Logger.getLogger(GhprbProjectAction.class.getName()).log(Level.SEVERE, "Request doesn't contain payload.");
+			logger.log(Level.SEVERE, "Request doesn't contain payload.");
 			return;
 		}
 		try{
@@ -55,10 +58,10 @@ public class GhprbProjectAction implements ProminentProjectAction{
 				System.out.println(pr);
 				repo.onPullRequestHook(pr);
 			}else{
-				Logger.getLogger(GhprbProjectAction.class.getName()).log(Level.WARNING, "Request not known");
+				logger.log(Level.WARNING, "Request not known");
 			}
 		}catch(IOException ex){
-			Logger.getLogger(GhprbProjectAction.class.getName()).log(Level.SEVERE, "Failed to parse github hook payload.", ex);
+			logger.log(Level.SEVERE, "Failed to parse github hook payload.", ex);
 		}
 	}
 }
