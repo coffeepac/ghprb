@@ -206,6 +206,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private Boolean useComments = false;
 		private String unstableAs = GHCommitState.FAILURE.name();
 		private Boolean autoCloseFailedPullRequests = false;
+		private Boolean verifyHookUrlSsl = true;
 		private String msgSuccess = "Test PASSed.";
 		private String msgFailure = "Test FAILed.";
 
@@ -247,6 +248,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			useComments = formData.getBoolean("useComments");
 			unstableAs = formData.getString("unstableAs");
 			autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
+			verifyHookUrlSsl = formData.getBoolean("verifyHookUrlSsl");
 			msgSuccess = formData.getString("msgSuccess");
 			msgFailure = formData.getString("msgFailure");
 			save();
@@ -353,6 +355,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 				gh = new GhprbGitHub();
 			}
 			return gh;
+    }
+
+		public boolean isVerifyHookUrlSsl() {
+			return verifyHookUrlSsl;
 		}
 
 		private Map<Integer, GhprbPullRequest> getPullRequests(String projectName) {

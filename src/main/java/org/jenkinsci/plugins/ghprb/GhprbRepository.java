@@ -3,11 +3,7 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.model.AbstractBuild;
 import java.io.IOException;
 import java.net.URL;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
@@ -149,11 +145,9 @@ public class GhprbRepository {
 	private static final EnumSet EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
 	private boolean hookExist() throws IOException{
 		for(GHHook h : repo.getHooks()){
-			if(!"web".equals(h.getName())) continue;
-			//System.out.println("  "+h.getEvents());
-			//if(!EVENTS.equals(h.getEvents())) continue;
-			if(!ml.getHookUrl().equals(h.getConfig().get("url"))) continue;
-			return true;
+			if("web".equals(h.getName()) && ml.getHookUrl().equals(h.getConfig().get("url"))) {
+				return true;
+			}
 		}
 		return false;
 	}
@@ -161,7 +155,12 @@ public class GhprbRepository {
 	public boolean createHook(){
 		try{
 			if(hookExist()) return true;
-			repo.createWebHook(new URL(ml.getHookUrl()),EVENTS);
+			Map<String,String> config = new HashMap<String, String>();
+			config.put("url", new URL(ml.getHookUrl()).toExternalForm());
+			if (!GhprbTrigger.getDscp().isVerifyHookUrlSsl()) {
+				config.put("insecure_ssl", "1");
+			}
+			repo.createHook("web", config, EVENTS, true);
 			return true;
 		}catch(IOException ex){
 			logger.log(Level.SEVERE, "Couldn't create web hook for repository"+reponame , ex);
