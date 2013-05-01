@@ -204,6 +204,14 @@ public class GhprbRepository {
 				pull = new GhprbPullRequest(pullRequest, ml, this);
 				pulls.put(number, pull);
 			}
+			try {
+				// HACKHACK: Current theory is that synchronize actions end up sending a much sparser pull request; it seems to have no owner?
+				if ("synchronize".equals(action)) {
+					pullRequest = repo.getPullRequest(number);
+				}
+			} catch (IOException ex) {
+				logger.log(Level.WARNING, "Trouble refreshing pull request for pr.number: {0}", new Object[] { number });
+			}
 			pull.check(pullRequest);
 		} else if ("closed".equals(action)) {
 			logger.log(Level.INFO, "Removing GhprbPullRequest for pr.number: {0}", new Object[] { number });
